@@ -248,7 +248,7 @@ for line in source_code:
         x = int(label_dict[token_line[1]], 16) - pc
         if x > 127 or x < -128:
             pass2_error_count += 1
-            print('Error on:', token_line, ' - Relative Displacment Out of Range')
+            print('Error on:', token_line, ' - Relative Displacement Out of Range')
         else:
             if x < 0:
                 disp = fn.cvtint2scomp(x-2)
