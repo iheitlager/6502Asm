@@ -20,6 +20,7 @@
 import asm6502Mod as fn
 import re
 import sys
+from pathlib import Path
 from collections import OrderedDict
 
 
@@ -186,7 +187,7 @@ if pass1_error_count > 0:
 
 
 # pass 2
-lstfiname = finame.split('.')[0] + '.lst' 
+lstfiname = Path(finame).stem + '.lst' 
 lstout = open(lstfiname, 'w')
 
 for line in source_code:
@@ -358,7 +359,7 @@ if pass2_error_count > 0:
 # create and write out the Intel hex file
 print(' ')
 print('Creating Intel hex file')
-fiout = finame.split('.')[0] + '.hex'
+fiout = Path(finame).stem + '.hex'
 tot_bytes = 0
 tot_code = ''
 with open(fiout, 'w') as sfo:
