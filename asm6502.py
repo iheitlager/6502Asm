@@ -32,7 +32,7 @@ code_dict = OrderedDict()
 
 
 address_mode_patterns_sym = {
-    '\#[0-9A-Z]{1,8}': 'Immediate', '[0-9A-Z+-]{1,8}': ('Zero Page', 'Absolute'), 
+    '\#[0-9A-Z]{1,8}': 'Immediate', '[_0-9A-Z+-]{1,8}': ('Zero Page', 'Absolute'), 
     '[0-9A-Z]{1,8},X': ('Zero Page,X', 'Absolute,X'), '[0-9A-Z]{1,8},Y': ('Zero Page,Y', 'Absolute,Y'),  
     '\([0-9A-Z]{1,8}\)': 'Indirect', '\([0-9A-Z]{1,8},X\)': 'Indirect,X', '\([0-9A-Z]{1,8}\),Y': 'Indirect,Y'
 }
@@ -115,7 +115,7 @@ for line in source_code:
         print(' ')
         break
     # handle Relative Address Mode Instructions    
-    elif token_line[0] in relative_address_mode_instructions and re.fullmatch('[0-9A-Z]{1,8}', token_line[1]) != None:
+    elif token_line[0] in relative_address_mode_instructions and re.fullmatch('[_0-9A-Z]{1,8}', token_line[1]) != None:
         pc = pc + 2
     else:
         if len(token_line) == 2:
@@ -247,7 +247,7 @@ for line in source_code:
         print('Assembly Complete')
         break
     # handle Relative Address Mode Instructions    
-    elif token_line[0] in relative_address_mode_instructions and re.fullmatch('[0-9A-Z]{1,8}', token_line[1]) != None:
+    elif token_line[0] in relative_address_mode_instructions and re.fullmatch('[_0-9A-Z]{1,8}', token_line[1]) != None:
         oc = relative_address_mode_instructions[token_line[0]]
         x = int(label_dict[token_line[1]], 16) - pc
         if x > 127 or x < -128:
@@ -287,7 +287,7 @@ for line in source_code:
                             elif mode == 'Immediate':   
                                 label = oper.lstrip('#')
                         # handle arithmetic in symbolic label
-                        z = re.search('[0-9+-]{2,4}', label)
+                        z = re.search('[_0-9+-]{2,4}', label)
                         if z != None:
                             f, t = z.span()
                             exp = label[f:t]
