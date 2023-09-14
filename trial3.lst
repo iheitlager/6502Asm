@@ -1,0 +1,91 @@
+PUTC = F001               PUTC        .equ $f001
+GETC = F004               getc        .equ $f004
+PDATA = 2000              pData       .equ $2000
+
+BR_CNT = 80               BR_CNT      .equ $80
+
+pc = 4096                             .org $1000
+;pProg       .db '++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.'
+1000 : 2B5B2B5B3E5D5D2E   pProg       .db '+[+[>]].'
+; >  ++pData;
+; <  --pData;
+; +  ++(*pData);
+; -  --(*pData);
+; .  putchar(*pData);
+; ,  *pData=getchar();
+; [  while (*pData) { // if( *pData == 0 ), pCode = find_same_depth ( ']' );
+; ]  }                // if( *pData != 0 ), pCode = find_same_depth ( '[' );
+;   *pData -> X
+;   *pProg -> Y
+pc = 12288                            .org $3000 
+3000 : A9 00                          LDA #$00        ; clear accumulator
+3002 : A8                             TAY             ; set prog pointer index
+3003 : AA                             TAX             ; set data pointer
+3004 : 4C 08 30                       JMP decode      ; start in decode loop
+3007 : C8                 FETCH       INY
+3008 : B9 00 10           decode      LDA pProg,Y     ; grab next token instruction from prog
+300B : D0 03                          BNE BF_NEXT     ; stop if end
+300D : 4C 99 30                       JMP end
+3010 : C9 3E              BF_NEXT     CMP #'>'
+3012 : D0 04                          BNE BF_PREV
+3014 : E8                             INX             ; do '>' ++pData
+3015 : 4C 07 30                       JMP FETCH
+3018 : C9 3C              BF_PREV     CMP #'<'
+301A : D0 04                          BNE BF_INC
+301C : CA                             DEX             ; do '<' --pData
+301D : 4C 07 30                       JMP FETCH       ; next instruction
+3020 : C9 2B              BF_INC      CMP #'+'
+3022 : D0 06                          BNE BF_DEC
+3024 : FE 00 20                       INC pData,X     ; do '+' ++(*pData)
+3027 : 4C 07 30                       JMP FETCH       ; next instruction
+302A : C9 2D              BF_DEC      CMP #'-'
+302C : D0 06                          BNE BF_OPEN
+302E : DE 00 20                       DEC pData,X     ; do '-' --(*pData)
+3031 : 4C 07 30                       JMP FETCH       ; next instruction
+3034 : C9 5B              BF_OPEN     CMP #'['
+3036 : D0 23                          BNE BF_CLSE
+3038 : BD 00 20                       LDA pData,X     ; do '[' if(*pData == 0)
+303B : D0 CA                          BNE FETCH       ; next instruction
+303D : A9 01                          LDA #$01
+303F : 85 80                          STA BR_CNT
+3041 : C8                 next_br     INY
+3042 : B9 00 10                       LDA pProg,Y     ; pCode = find_same_depth ( ']' );
+3045 : F0 52                          BEQ end
+3047 : C9 5B                          CMP #'['
+3049 : D0 05                          BNE clos_br
+304B : E6 80                          INC BR_CNT
+304D : 4C 41 30                       JMP next_br
+3050 : C9 5D              clos_br     CMP #']'
+3052 : D0 ED                          BNE next_br
+3054 : C6 80                          DEC BR_CNT
+3056 : D0 E9                          BNE next_br
+3058 : 4C 07 30                       JMP FETCH
+305B : C9 5D              BF_CLSE     CMP #']'
+305D : D0 23                          BNE BF_GETC
+305F : BD 00 20                       LDA pData,X     ; do ']' if(*pData != 0)
+3062 : F0 A3                          BEQ FETCH       ; next instruction
+3064 : A9 01                          LDA #$01
+3066 : 85 80                          STA BR_CNT
+3068 : 88                 prev_br     DEY             
+3069 : B9 00 10                       LDA pProg,Y     ; pCode = find_same_depth ( '[' );
+306C : F0 2b                          BEQ end        
+306E : C9 5D                          CMP #']'
+3070 : F0 05                          BEQ open_br
+3072 : E6 80                          INC BR_CNT
+3074 : 4C 68 30                       JMP prev_br
+3077 : C9 5B              open_br     CMP #'['
+3079 : D0 ED                          BNE prev_br
+307B : C6 80                          DEC BR_CNT
+307D : D0 E9                          BNE prev_br
+307F : 4C 07 30                       JMP FETCH
+3082 : C9 2C              BF_GETC     CMP #','
+3084 : D0 06                          BNE BF_PUTC
+3086 : 8D 04 F0                       STA getc        ; do *pData=getchar();
+3089 : 4C 07 30                       JMP FETCH       ; next instruction
+308C : C9 2E              BF_PUTC     CMP #'.'
+308E : D0 06                          BNE LAST        ; end of parse loop
+3090 : BD 00 20                       LDA pData,X     ; do putchar(*pData)
+3093 : 8D 01 F0                       STA PUTC        
+3096 : 4C 07 30           LAST        JMP FETCH       ; next instruction      
+3099 : 00                 end         BRK
+309A                                  .end

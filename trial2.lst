@@ -1,0 +1,15 @@
+PUTC = F001               putc        .equ $f001
+PDATA = 2000              pData       .equ $2000
+
+pc = 4096                             .org $1000
+1000 : 2B5B2D2D3E2D5B3E3E2 prog        .db '+[-->-[>>+>-----<<]<--<---]>-.>>>+.>>..+++[.>]<<<<.+++.------.<<-.>>>>+.'
+
+pc = 12288                            .org $3000 
+3000 : A2 00                          LDX #$00        ; set index
+3002 : BD 00 10           loop        LDA prog,X      ; grab token instruction from prog
+3005 : F0 07                          BEQ en          ; stop if end
+3007 : 8D 01 F0                       STA putc        ; print char
+300A : E8                             INX             ; Increment X
+300B : 4C 02 30                       JMP loop        ; Else we loop
+300E : 00                 en          BRK
+300F                                  .end
