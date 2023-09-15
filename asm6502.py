@@ -33,8 +33,8 @@ code_dict = OrderedDict()
 
 address_mode_patterns_sym = {
     '\#[0-9A-Z]{1,8}': 'Immediate', '[_0-9A-Z+-]{1,8}': ('Zero Page', 'Absolute'), 
-    '[0-9A-Z]{1,8},X': ('Zero Page,X', 'Absolute,X'), '[0-9A-Z]{1,8},Y': ('Zero Page,Y', 'Absolute,Y'),  
-    '\([0-9A-Z]{1,8}\)': 'Indirect', '\([0-9A-Z]{1,8},X\)': 'Indirect,X', '\([0-9A-Z]{1,8}\),Y': 'Indirect,Y'
+    '[_0-9A-Z]{1,8},X': ('Zero Page,X', 'Absolute,X'), '[_0-9A-Z]{1,8},Y': ('Zero Page,Y', 'Absolute,Y'),  
+    '\([_0-9A-Z]{1,8}\)': 'Indirect', '\([_0-9A-Z]{1,8},X\)': 'Indirect,X', '\([_0-9A-Z]{1,8}\),Y': 'Indirect,Y'
 }
 
 
@@ -100,12 +100,12 @@ for line in source_code:
     if token_line[0] == '.ORG':
         pc = int(token_line[1][1:],16)
     elif token_line[0] == '.DB':
-        num_data_bytes, data_bytes = fn.build_data_bytes(token_line[1])
+        num_data_bytes, data_bytes = fn.build_data_bytes(token_line[1], label_dict)
         pc = pc + num_data_bytes
     elif token_line[0] == '.DS':
         pc = pc + int(token_line[1])
     elif token_line[0] == '.EQU':
-        num_data_bytes, data_bytes = fn.build_data_bytes(token_line[1])
+        num_data_bytes, data_bytes = fn.build_data_bytes(token_line[1], label_dict)
         label_dict[label] = data_bytes
     elif token_line[0] == '.END':
         if pass1_error_count == 0:
@@ -147,10 +147,12 @@ for line in source_code:
                             f, t = z.span()
                             label = label[0:f]
                         if label in label_dict:
-                            oper = '$' + label_dict[label]
+                            oper = label_dict[label]
                         else:
-                            oper = '$FFFF'
+                            oper = 'FFFF'
                             label_dict[label] = oper
+                        if oper[0] != '$':
+                            oper = '$' + oper
                         if isinstance(mode, tuple):
                             if 'Zero Page,X' in mode:
                                 oper = oper + ',X'
@@ -166,7 +168,7 @@ for line in source_code:
                             elif mode == 'Immediate':   
                                 oper = '#' + oper                            
                         break
-                        
+            print (token_line, oper)
             am, nb, oc = fn.determine_mode(token_line[0], oper)
             pass1_error_check(token_line, am, oc)
         elif len(token_line) == 1:
@@ -222,7 +224,7 @@ for line in source_code:
         lineout = fn.myprint(line, 'pc =', pc)
         lstout.write(lineout)   
     elif token_line[0] == '.DB':
-        num_data_bytes, data_bytes = fn.build_data_bytes(token_line[1])
+        num_data_bytes, data_bytes = fn.build_data_bytes(token_line[1], label_dict)
         lineout = fn.myprint(line, fn.i2h(pc, 4), ':', data_bytes)
         lstout.write(lineout)   
         code_dict[fn.i2h(pc, 4)] = data_bytes
@@ -232,7 +234,7 @@ for line in source_code:
         lstout.write(lineout)   
         pc = pc + int(token_line[1])
     elif token_line[0] == '.EQU':
-        num_data_bytes, data_bytes = fn.build_data_bytes(token_line[1])
+        num_data_bytes, data_bytes = fn.build_data_bytes(token_line[1], label_dict)
         lineout = fn.myprint(line, label, '=', data_bytes)
         lstout.write(lineout)   
     elif token_line[0] == '.END':

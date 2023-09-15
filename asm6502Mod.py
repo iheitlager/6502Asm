@@ -192,7 +192,7 @@ def determine_mode(mnemonic, operand):
 
 # Construct data bytes field from a .db directive
 # return the number of bytes and data bytes string
-def build_data_bytes(operand):
+def build_data_bytes(operand, label_dict):
     db_str = ''
     for db in operand.split(','):
         if db.startswith('$'):
@@ -211,6 +211,11 @@ def build_data_bytes(operand):
                     db_str = db_str + hex(ord(c))[2:].zfill(2).upper()
         elif db[0] == '%':                   
             db_str = db_str + hex(int(db[1:],2))[2:].zfill(2).upper()
+        elif db[0] == '&':
+            try:
+                db_str = db_str + label_dict[db[1:]][2:]
+            except KeyError:
+                db_str = db_str + '00'
     nb = len(db_str) // 2        
     return (nb, db_str)
     
